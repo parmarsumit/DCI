@@ -22,6 +22,7 @@
     <hudson.tasks.Shell>
       <command>#!/bin/bash
 source /var/lib/jenkins/JobScripts/create_container_html.sh
+source /var/lib/jenkins/JobScripts/git_functions_new.sh
 
 ssh root@{SERVER_IP} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb/results &amp;&amp; rm -f *.xml&quot;
 
