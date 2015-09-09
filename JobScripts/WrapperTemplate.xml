@@ -44,7 +44,7 @@
 source /var/lib/jenkins/JobScripts/util_functions.sh
 source /var/lib/jenkins/JobScripts/create_container_html.sh
 source /var/lib/jenkins/JobScripts/git_functions.sh
-source /var/lib/jenkins/JobScripts/docker_functions.new.sh
+source /var/lib/jenkins/JobScripts/docker_functions_new.sh
 source /var/lib/jenkins/JobScripts/git_functions_new.sh
 
 HOST_SSH_PORT=4940
