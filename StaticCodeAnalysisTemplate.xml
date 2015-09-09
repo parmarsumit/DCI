@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
-  <description>I will perform PHPUnit test cases on {feature_branch} branch</description>
+  <description>I will do static code analysis on {feature_branch} branch</description>
   <keepDependencies>false</keepDependencies>
   <properties>
     <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.4.1">
@@ -11,7 +11,7 @@
   <scm class="hudson.scm.NullSCM"/>
   <canRoam>true</canRoam>
   <disabled>false</disabled>
-  <blockBuildWhenDownstreamBuilding>true</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
   <triggers/>
   <concurrentBuild>false</concurrentBuild>
@@ -20,13 +20,19 @@
       <command>#!/bin/bash
 source /var/lib/jenkins/JobScripts/create_container_html.sh
 
-ssh root@{SERVER_IP} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb/results &amp;&amp; rm -f *.xml&quot;
+echo &quot;Removing staticresults directory.&quot;;
+ssh root@{SERVER_IP} -p 4940 &quot;rm -rf /usr/share/nginx/www/ProgrammableWeb/staticresults&quot;
+echo &quot;Creating staticresults directory.&quot;;
+ssh root@{SERVER_IP} -p 4940 &quot;mkdir /usr/share/nginx/www/ProgrammableWeb/staticresults&quot;
 
-ssh root@{SERVER_IP} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb &amp;&amp; tests/bin/phpunit -v --debug --stop-on-failure --log-junit results/phpunit.xml tests/phpunit_tests&quot;
+echo &quot;Starting PHPCS.&quot;;
+ssh root@{SERVER_IP} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb/ &amp;&amp; tests/bin/phpcs --report=junit --report-file=staticresults/phpcs.xml sites/all/modules/custom&quot;
+
+#ssh root@{SERVER_IP} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb/ &amp;&amp; tests/bin/phpcbf sites/all/modules/custom&quot;
 
 rm -rf results
 mkdir -p results
-scp -P 4940 root@{SERVER_IP}:/usr/share/nginx/www/ProgrammableWeb/results/*.xml results/</command>
+scp -P 4940 root@{SERVER_IP}:/usr/share/nginx/www/ProgrammableWeb/staticresults/*.xml results/</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
@@ -37,36 +43,6 @@ scp -P 4940 root@{SERVER_IP}:/usr/share/nginx/www/ProgrammableWeb/results/*.xml 
     </hudson.tasks.junit.JUnitResultArchiver>
     <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher plugin="flexible-publish@0.13">
       <publishers>
-        <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
-          <condition class="org.jenkins_ci.plugins.run_condition.core.StatusCondition" plugin="run-condition@1.0">
-            <worstResult>
-              <name>SUCCESS</name>
-              <ordinal>0</ordinal>
-              <color>BLUE</color>
-              <completeBuild>true</completeBuild>
-            </worstResult>
-            <bestResult>
-              <name>SUCCESS</name>
-              <ordinal>0</ordinal>
-              <color>BLUE</color>
-              <completeBuild>true</completeBuild>
-            </bestResult>
-          </condition>
-          <publisherList>
-            <hudson.plugins.parameterizedtrigger.TriggerBuilder plugin="parameterized-trigger@2.25">
-              <configs>
-                <hudson.plugins.parameterizedtrigger.BlockableBuildTriggerConfig>
-                  <configs class="empty-list"/>
-                  <projects>{feature_branch}FunctionalTest</projects>
-                  <condition>ALWAYS</condition>
-                  <triggerWithNoParameters>false</triggerWithNoParameters>
-                  <buildAllNodesWithLabel>false</buildAllNodesWithLabel>
-                </hudson.plugins.parameterizedtrigger.BlockableBuildTriggerConfig>
-              </configs>
-            </hudson.plugins.parameterizedtrigger.TriggerBuilder>
-          </publisherList>
-          <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail" plugin="run-condition@1.0"/>
-        </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
         <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
           <condition class="org.jenkins_ci.plugins.run_condition.core.AlwaysRun" plugin="run-condition@1.0"/>
           <publisherList>
