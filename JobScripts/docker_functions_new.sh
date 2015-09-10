@@ -1,26 +1,32 @@
 #!/bin/bash
-install_docker() {
-	server_ip=$1
-	ssh -o StrictHostKeyChecking=no root@${server_ip} "sudo apt-get update"
-        ssh -o StrictHostKeyChecking=no root@${server_ip} "docker"  
-	if [ $? -eq 0 ]
-	then
-	  echo "docker allredy install"
-	else
-	   echo "docker install"
-	   ssh -o StrictHostKeyChecking=no root@${server_ip} "curl -sSL https://get.docker.com/ | sh"
-	fi
-}
 
+install_docker(){
+	server_ip=$1
+	ssh -t -t -o StrictHostKeyChecking=no root@${server_ip} <<EOF
+	sudo apt-get update
+	docker
+	if [ $? -eq 0 ];
+	then
+           echo "Docker Allredy Installed"
+	else
+	   echo "Installing Docker..."
+	   curl -sSL https://get.docker.com/ | sh
+	fi
+	exit
+EOF
+}
+ 
 copy_docker_image(){
 	JENKINS_HOME=$1
 	server_ip=$2
 	time scp -r -o StrictHostKeyChecking=no ${JENKINS_HOME}/docker.tar root@${server_ip}:~/.
-        echo "Load docker images"
-	ssh -o StrictHostKeyChecking=no root@${server_ip} "docker load < ~/docker.tar"
-	ssh -o StrictHostKeyChecking=no root@${server_ip} " docker tag 89bd1c4685b3 vnc_php_test:latest"
+	ssh -t -t -o StrictHostKeyChecking=no root@${server_ip} <<EOF
+	docker load < ~/docker.tar
+	docker tag 89bd1c4685b3 vnc_php_test:latest
+	exit
+EOF
 }
- 
+
 create_container() {
         container="${1}_Container"
         host_sshport=$2
@@ -31,6 +37,7 @@ create_container() {
         container_nginxport=$7
         image_name=$8
 	server_ip=$9
+        echo  "launch docker container.."
         ssh -o StrictHostKeyChecking=no root@${server_ip}  "docker run -d --name $container -p ${host_sshport}:${container_sshport} -p ${host_vncport}:${container_vncport} -p ${host_nginxport}:${container_nginxport} ${image_name}"
 }
 
@@ -52,6 +59,23 @@ setup_mysql() {
         ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "service mysql start"
 }
 
+setup_mysql() {
+	server_ip=$1
+        ssh_port=$2
+	JENKINS_HOME=$3
+	echo $server_ip  $ssh_port $JENKINS_HOME
+	echo "Stop mysql service"
+        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "service mysql stop"
+	time scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${JENKINS_HOME}/data/mysql root@${server_ip}:/var/lib
+        scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${JENKINS_HOME}/data/my.cnf root@${server_ip}:/etc/mysql
+        ssh -t -t root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} <<EOF 
+	chown -R mysql:mysql /var/lib/mysql
+        chown -R root:root /etc/mysql/my.cnf
+	service mysql start
+	exit
+EOF
+}
+
 copy_files() {
 	server_ip=$1
         ssh_port=$2
@@ -70,16 +94,19 @@ copy_git_project() {
         ssh_port=$2
         source_dir=$3
         ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "mkdir -p /usr/share/nginx/www/ProgrammableWeb"
-        scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${source_dir}/. root@${server_ip}:/usr/share/nginx/www/ProgrammableWeb/
+        scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${source_dir}/* root@${server_ip}:/usr/share/nginx/www/ProgrammableWeb
 }
 
 change_settings() {
 	server_ip=$1
         ssh_port=$2
-        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "cd /usr/share/nginx/www/ProgrammableWeb/sites/default && chown -R www-data:root files && chown root:root settings.php"
-        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "cd /usr/share/nginx/www/ProgrammableWeb/sites/default && chmod 644 settings.php"
-        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "cd /data && chown -R www-data:root files && chown root:root settings.php"
-        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "cd /data && chmod 644 settings.php"
+        ssh -t -t root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} <<EOF
+	cd /usr/share/nginx/www/ProgrammableWeb/sites/default && chown -R www-data:root files && chown root:root settings.php
+	cd /usr/share/nginx/www/ProgrammableWeb/sites/default && chmod 644 settings.php
+        cd /data && chown -R www-data:root files && chown root:root settings.php
+        cd /data && chmod 644 settings.php
+	exit
+EOF
 }
 
 copy_setting_files() {
