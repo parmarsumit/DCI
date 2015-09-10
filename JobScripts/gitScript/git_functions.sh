@@ -63,7 +63,6 @@ generate_email_list_for_conflict_files() {
         TARGET_BRANCH=$2
         GIT_CODEBASE_DIR=$3
 
-#	echo "" > /tmp/conflictFilesAuthorsEmail.lst
 	rm -f /tmp/conflictFilesAuthorsEmail.txt
         touch /tmp/conflictFilesAuthorsEmail.txt
 	echo "EMAIL=" >> /tmp/conflictFilesAuthorsEmail.txt
@@ -90,7 +89,6 @@ merge_checkedout_branches() {
 		git diff --name-only --diff-filter=U > /tmp/conflictfiles.txt
 		git merge --abort
 		generate_email_list_for_conflict_files ${SOURCE_BRANCH} ${TARGET_BRANCH} ${GIT_CODEBASE_DIR}
-#		sed -i "s/$/${mail},/" "/var/lib/jenkins/jobs/merge_master_to_feature/email.properties"
 		exit 1
 	else 
 		echo "Merge from ${SOURCE_BRANCH} to ${TARGET_BRANCH} succeeded, commiting the changes"
@@ -107,7 +105,6 @@ merge_branch() {
 	GIT_CODEBASE_DIR=$3
 
 	echo "I'll be merging ${SOURCE_BRANCH} to ${TARGET_BRANCH} under ${GIT_CODEBASE_DIR}"
-
 	cd ${GIT_CODEBASE_DIR}
 	checkout_branch ${SOURCE_BRANCH}
 

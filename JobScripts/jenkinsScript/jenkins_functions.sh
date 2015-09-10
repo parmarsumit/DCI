@@ -1,6 +1,6 @@
 #!/bin/bash
 source /var/lib/jenkins/JobScripts/shell_functions.sh
-source /var/lib/jenkins/JobScripts/jenkins.properties
+source /var/lib/jenkins/JobScripts/conf/jenkins.properties
 
 createJobConfigFromTemplate(){
     path_job_template=$1

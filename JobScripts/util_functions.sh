@@ -1,6 +1,6 @@
 #!/bin/bash
-source /var/lib/jenkins/JobScripts/jenkins_functions.sh
-source /var/lib/jenkins/JobScripts/git_functions.sh
+source /var/lib/jenkins/JobScripts/jenkinsScript/jenkins_functions.sh
+source /var/lib/jenkins/JobScripts/gitScript/git_functions.sh
 check_active_port(){
 	RANGE_MIN=$1
 	RANGE_MAX=$2
@@ -147,47 +147,3 @@ check_branch() {
 	fi
 }
 
-#setup_mysql() {
-#	ssh_port=$1
-#	ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "service mysql stop"
-#	scp -r -o StrictHostKeyChecking=no -P ${ssh_port} /var/lib/jenkins/data/mysql root@localhost:/var/lib
-#	ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "chown -R mysql:mysql /var/lib/mysql"
-#	scp -r -o StrictHostKeyChecking=no -P ${ssh_port} /var/lib/jenkins/data/my.cnf root@localhost:/etc/mysql
-#	ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "chown -R root:root /etc/mysql/my.cnf"
-#	ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "service mysql start"
-#}
-
-#copy_git_project() {
-#	ssh_port=$1
-#	source_dir=$2
-#	ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "mkdir -p /usr/share/nginx/www/ProgrammableWeb"
-#	scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${source_dir}/. root@localhost:/usr/share/nginx/www/ProgrammableWeb
-#	ssh root@localhost -p ${ssh_port} "cd /usr/share/nginx/www/ && mv workspace ProgrammableWeb"
-#}
-
-#copy_files() {
-#	ssh_port=$1
- #       ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "rm -rf /data/files"
- #       scp -r -o StrictHostKeyChecking=no -P ${ssh_port} /var/lib/jenkins/data/files root@localhost:/data/
- #       ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "rm -rf /data/settings.php"
- #       scp -r -o StrictHostKeyChecking=no -P ${ssh_port} /var/lib/jenkins/data/settings.php root@localhost:/data/
- #       ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "chown -R www-data /data/files"
-#	scp -r -P ${ssh_port} /var/lib/jenkins/data/files root@localhost:/usr/share/nginx/www/ProgrammableWeb/sites/default/
-#	scp -r -P ${ssh_port} /var/lib/jenkins/data/settings.php root@localhost:/usr/share/nginx/www/ProgrammableWeb/sites/default/
-#}
-
-#change_settings() {
-#	ssh_port=$1
-#	ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "cd /usr/share/nginx/www/ProgrammableWeb/sites/default && chown -R www-data:root files && chown root:root settings.php"
-#	ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "cd /usr/share/nginx/www/ProgrammableWeb/sites/default && chmod 644 settings.php"
-#	ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "cd /data && chown -R www-data:root files && chown root:root settings.php"
-#	ssh root@localhost -o StrictHostKeyChecking=no -p ${ssh_port} "cd /data && chmod 644 settings.php"
-#}
-
-#copy_setting_files() {
-#	ssh_port=$1
-#	scp -o StrictHostKeyChecking=no -P ${ssh_port} /var/lib/jenkins/data/default root@localhost:/etc/nginx/sites-available
-#	scp -o StrictHostKeyChecking=no -P ${ssh_port} /var/lib/jenkins/data/php.ini root@localhost:/etc/php5/fpm/
-#	scp -o StrictHostKeyChecking=no -P ${ssh_port} /var/lib/jenkins/data/behat.yml root@localhost:/usr/share/nginx/www/ProgrammableWeb/tests/
-#	scp -o StrictHostKeyChecking=no -P ${ssh_port} /var/lib/jenkins/data/composer.json root@localhost:/usr/share/nginx/www/ProgrammableWeb/tests/
-#}
