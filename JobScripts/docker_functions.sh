@@ -23,4 +23,12 @@ create_image_from_container() {
 	IMAGE_NAME="${1}_IMAGE"
 
 	docker commit ${CONTAINER_NAME} ${IMAGE_NAME,,}
+}
+
+create_image_dump() {
+	BRANCH_NAME=$1
+	DUMP_LOCATION=$2
+	IMAGE_NAME="${1}_IMAGE"
+
+	docker save ${IMAGE_NAME,,} > ${DUMP_LOCATION}/${IMAGE_NAME,,}.tar 
 }	
