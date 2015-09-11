@@ -1,0 +1,155 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <logRotator class="hudson.tasks.LogRotator">
+    <daysToKeep>-1</daysToKeep>
+    <numToKeep>5</numToKeep>
+    <artifactDaysToKeep>-1</artifactDaysToKeep>
+    <artifactNumToKeep>-1</artifactNumToKeep>
+  </logRotator>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.1">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>BRANCH_NAME</name>
+          <description></description>
+          <defaultValue></defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@2.4.0">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>git@github.com:mulesoft-web/ProgrammableWeb</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/${BRANCH_NAME}</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+source /var/lib/jenkins/JobScripts/git_functions.sh
+source /var/lib/jenkins/JobScripts/jenkins_functions.sh
+source /var/lib/jenkins/JobScripts/util_functions.sh
+source /var/lib/jenkins/JobScripts/docker_functions_new.sh
+source /var/lib/jenkins/JobScripts/create_container_html.sh
+source /var/lib/jenkins/JobScripts/jenkins.properties
+source /var/lib/jenkins/JobScripts/git_functions_new.sh
+
+
+SERVER_NAME=${BRANCH_NAME}Server
+
+
+echo &quot;Launching Instances..&quot;
+instance_id=`python ~/JobScripts/manage_instance.py &apos;launch_instance(&quot;&apos;&quot;$SERVER_NAME&quot;&apos;&quot;,&quot;&apos;&quot;$IMAGE&quot;&apos;&quot;,&quot;&apos;&quot;$SIZE&quot;&apos;&quot;,&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$REGION&quot;&apos;&quot;,&quot;&apos;&quot;$SSH_ID&quot;&apos;&quot;)&apos;`
+
+sleep 3m
+
+echo &quot;Get server ip&quot;
+server_ip=`python ~/JobScripts/manage_instance.py &apos;get_server_ip(&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$instance_id&quot;&apos;&quot;)&apos;`
+
+createJobConfigFromTemplate ~/JobScripts/WrapperTemplate.xml ${BRANCH_NAME} /tmp/config1.xml &quot;$server_ip&quot;
+createJobConfigFromTemplate ~/JobScripts/UnitTestTemplate.xml ${BRANCH_NAME} /tmp/config2.xml &quot;$server_ip&quot;
+createJobConfigFromTemplate ~/JobScripts/FunctionalTestTemplate.xml ${BRANCH_NAME} /tmp/config3.xml &quot;$server_ip&quot;
+createJobConfigFromTemplate ~/JobScripts/StaticCodeAnalysisTemplate.xml ${BRANCH_NAME} /tmp/config4.xml &quot;$server_ip&quot;
+
+git_last_commit  ${WORKSPACE} ${BRANCH_NAME}
+
+echo &quot;${SERVER_NAME} ${BRANCH_NAME} ${instance_id} ${server_ip} 4940 5901 8292&quot; &gt;&gt; ${JENKINS_HOME}/portlookup/server_mapping
+
+echo &quot;install docker..&quot;
+install_docker ${server_ip}
+
+echo &quot;Copy Docker image..&quot;
+copy_docker_image ${JENKINS_HOME} ${server_ip}
+
+echo &quot;create docker container&quot;
+create_container &quot;${BRANCH_NAME}Server&quot; 4940 22 5901 5901 8292 80 vnc_php_test ${server_ip}
+
+sleep 1m
+
+echo &quot;Copying the database to the container.&quot;
+setup_mysql &quot;${server_ip}&quot; &quot;4940&quot; &quot;${JENKINS_HOME}&quot;
+
+echo &quot;Copying the files to the container.&quot;
+copy_files &quot;${server_ip}&quot; &quot;4940&quot; &quot;${JENKINS_HOME}&quot;
+
+
+createJob &quot;${BRANCH_NAME}MultiJob&quot; /tmp/config1.xml
+createJob &quot;${BRANCH_NAME}UnitTest&quot; /tmp/config2.xml
+createJob &quot;${BRANCH_NAME}FunctionalTest&quot; /tmp/config3.xml
+createJob &quot;${BRANCH_NAME}StaticCodeAnalysis&quot; /tmp/config4.xml
+
+echo &quot;Created a docker container for feature branch ${BRANCH_NAME} with ports:&quot;
+echo &quot;SSH =&gt; 4940&quot;
+echo &quot;VNC =&gt; 5901&quot;
+echo &quot;NGINX =&gt; 8292&quot;
+
+BRANCH_AUTHOR_EMAIL=`$(get_branch_author_email ${BRANCH_NAME})`
+echo $BRANCH_AUTHOR_EMAIL
+echo &quot;I&apos;ve to send mail to $BRANCH_AUTHOR_EMAIL about the branch getting tracked by CI system&quot;
+echo &quot;EMAIL=$BRANCH_AUTHOR_EMAIL&quot; &gt; email.txt</command>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@1.92.1">
+      <info>
+        <propertiesFilePath>email.txt</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+  </builders>
+  <publishers>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.40.5">
+      <recipientList>$DEFAULT_RECIPIENTS</recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+          <email>
+            <recipientList></recipientList>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.DevelopersRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+      </configuredTriggers>
+      <contentType>default</contentType>
+      <defaultSubject>$DEFAULT_SUBJECT</defaultSubject>
+      <defaultContent>$DEFAULT_CONTENT</defaultContent>
+      <attachmentsPattern></attachmentsPattern>
+      <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+      <attachBuildLog>true</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo>$DEFAULT_REPLYTO</replyTo>
+      <saveOutput>false</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+  </publishers>
+  <buildWrappers/>
+</project>
