@@ -116,23 +116,24 @@ mergeBranchToActiveBranches() {
 	done
 }
 
+#I'll receive a git repo url, I'll check if there are any new branches created in this repo url, if so I'll run SetupFeatureBranch jenkins job to initiate the
+# CI setup for each feature branch
 check_for_new_branches() {
-	GIT_ADDRESS=$1
-	git ls-remote --heads ${GIT_ADDRESS} | cut -d/ -f3 | sort > /var/lib/jenkins/branch_changes/branch_list_latest
+	GIT_REPO_URL=$1
+	git ls-remote --heads ${GIT_REPO_URL} | cut -d/ -f3 | sort > /var/lib/jenkins/branch_changes/branch_list_latest
 	comm -3 /var/lib/jenkins/branch_changes/branch_list /var/lib/jenkins/branch_changes/branch_list_latest | sed 's/^\t//' > /var/lib/jenkins/branch_changes/branches
 	[ -s /var/lib/jenkins/branch_changes/branches ]
 	if [ $? -eq 1 ]; then
-		mv /var/lib/jenkins/branch_changes/branch_list_latest /var/lib/jenkins/branch_changes/branch_list
+#		mv /var/lib/jenkins/branch_changes/branch_list_latest /var/lib/jenkins/branch_changes/branch_list
 		echo "No new branches created"
         else
 		mv /var/lib/jenkins/branch_changes/branch_list_latest /var/lib/jenkins/branch_changes/branch_list
-		while read -r line
+		while read -r branchName
 		do
-			name=$line
-			echo "Running setup feature branch job for new branch ${name}"
-			BRANCH_OWNER_EMAIL=$(get_branch_author_email $name)
+			echo "Running setup feature branch job for new branch ${branchName}"
+			BRANCH_OWNER_EMAIL=$(get_branch_author_email $branchName)
 			echo "BRANCH_OWNER_EMAIL=${BRANCH_OWNER_EMAIL}" > /var/lib/jenkins/branch_changes/branchOwner.email
-			build_job Test_SetupFeatureBranch ${name}
+			build_job SetupFeatureBranch ${branchName}
 		done < /var/lib/jenkins/branch_changes/branches
 	fi
 }
