@@ -42,3 +42,30 @@ delete_image() {
 	rm -f ${DUMP_LOCATION}/${IMAGE_NAME,,}.tar
 	docker rmi ${IMAGE_NAME,,}
 }
+
+install_docker() {
+        server_ip=$1
+        ssh -o StrictHostKeyChecking=no root@${server_ip} "sudo apt-get update"
+        ssh -o StrictHostKeyChecking=no root@${server_ip} "docker"
+        if [ $? -eq 0 ]
+        then
+          echo "docker allredy installed"
+        else
+           echo "docker install"
+           ssh -o StrictHostKeyChecking=no root@${server_ip} "curl -sSL https://get.docker.com/ | sh"
+        fi
+}
+
+copy_docker_image(){
+        DUMP_LOCATION=$1
+	BRANCH_NAME=$2
+        server_ip=$3
+	IMAGE_NAME="${BRANCH_NAME}_IMAGE"
+
+        time scp -r -o StrictHostKeyChecking=no ${DUMP_LOCATION}/${IMAGE_NAME,,}.tar root@${server_ip}:docker.tar
+        echo "Load docker images"
+        ssh -o StrictHostKeyChecking=no root@${server_ip} "docker load < ~/docker.tar"
+#        ssh -o StrictHostKeyChecking=no root@${server_ip} "docker tag 89bd1c4685b3 vnc_php_test:latest"
+}
+
+
