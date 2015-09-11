@@ -12,7 +12,8 @@ create_container(){
 }
 
 delete_container(){
-	container="${1}_Container"
+	BRANCH_NAME=$1
+	container="${BRANCH_NAME}_Container"
 	docker rm -f -v $container
 }
 
@@ -20,7 +21,7 @@ create_image_from_container() {
 
 	BRANCH_NAME=$1
 	CONTAINER_NAME="${1}_Container"
-	IMAGE_NAME="${1}_IMAGE"
+	IMAGE_NAME="${BRANCH_NAME}_IMAGE"
 
 	docker commit ${CONTAINER_NAME} ${IMAGE_NAME,,}
 }
@@ -28,7 +29,16 @@ create_image_from_container() {
 create_image_dump() {
 	BRANCH_NAME=$1
 	DUMP_LOCATION=$2
-	IMAGE_NAME="${1}_IMAGE"
+	IMAGE_NAME="${BRANCH_NAME}_IMAGE"
 
 	docker save ${IMAGE_NAME,,} > ${DUMP_LOCATION}/${IMAGE_NAME,,}.tar 
 }	
+
+delete_image() {
+	BRANCH_NAME=$1
+	DUMP_LOCATION=$2
+	IMAGE_NAME="${BRANCH_NAME}_IMAGE"
+
+	rm -f ${DUMP_LOCATION}/${IMAGE_NAME,,}.tar
+	docker rmi ${IMAGE_NAME,,}
+}
