@@ -11,6 +11,21 @@ create_container(){
 	docker run -d --name $container -p ${host_sshport}:${container_sshport} -p ${host_vncport}:${container_vncport} -p ${host_nginxport}:${container_nginxport} ${image_name}
 }
 
+create_container_at_server(){
+	BRANCH_NAME=$1
+        container="${BRANCH_NAME}_Container"
+        host_sshport=$2
+        container_sshport=$3
+        host_vncport=$4
+        container_vncport=$5
+        host_nginxport=$6
+        container_nginxport=$7
+        image_name="${BRANCH_NAME}_IMAGE"
+	server_ip=$8
+        ssh -o StrictHostKeyChecking=no root@${server_ip} "docker run -d --name $container -p ${host_sshport}:${container_sshport} -p ${host_vncport}:${container_vncport} -p ${host_nginxport}:${container_nginxport} ${image_name,,}"
+}
+
+
 delete_container(){
 	BRANCH_NAME=$1
 	container="${BRANCH_NAME}_Container"
