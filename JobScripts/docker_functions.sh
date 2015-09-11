@@ -15,3 +15,12 @@ delete_container(){
 	container="${1}_Container"
 	docker rm -f -v $container
 }
+
+create_image_from_container() {
+
+	BRANCH_NAME=$1
+	CONTAINER_NAME="${1}_Container"
+	IMAGE_NAME="${1}_IMAGE"
+
+	docker commit ${CONTAINER_NAME} ${IMAGE_NAME,,}
+}	
