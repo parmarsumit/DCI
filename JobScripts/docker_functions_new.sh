@@ -31,22 +31,22 @@ create_container() {
         container_nginxport=$7
         image_name=$8
 	server_ip=$9
-        ssh -o StrictHostKeyChecking=no root@${server_ip}  "docker run -d --name $container -p ${host_sshport}:${container_sshport} -p ${host_vncport}:${container_vncport} -p ${host_nginxport}:${container_nginxport} ${image_name}"
+        docker run -d --name $container -p ${host_sshport}:${container_sshport} -p ${host_vncport}:${container_vncport} -p ${host_nginxport}:${container_nginxport} ${image_name}
 }
 
 
 setup_mysql() {
 	server_ip=$1
         ssh_port=$2
-	JENKINS_HOME=$3
+	LOCAL_MYSQL_DATA_DIR=$3
 	echo $server_ip  $ssh_port $JENKINS_HOME
 	echo "Stop mysql service"
         ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "service mysql stop"
 	echo "Copy database"
-	time scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${JENKINS_HOME}/data/mysql root@${server_ip}:/var/lib
+	time scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${LOCAL_MYSQL_DATA_DIR}/data/mysql root@${server_ip}:/var/lib
         ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "chown -R mysql:mysql /var/lib/mysql"
 	echo "Copy my.cnf"
-        scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${JENKINS_HOME}/data/my.cnf root@${server_ip}:/etc/mysql
+        scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${LOCAL_MYSQL_DATA_DIR}/data/my.cnf root@${server_ip}:/etc/mysql
         ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "chown -R root:root /etc/mysql/my.cnf"
 	echo "Start mysql service"
         ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "service mysql start"
