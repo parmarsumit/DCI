@@ -22,7 +22,7 @@ create_container_at_server(){
         container_nginxport=$7
         image_name="${BRANCH_NAME}_IMAGE"
 	server_ip=$8
-        ssh -o StrictHostKeyChecking=no root@${server_ip} "docker run -d --name $container -p ${host_sshport}:${container_sshport} -p ${host_vncport}:${container_vncport} -p ${host_nginxport}:${container_nginxport} ${image_name,,}"
+        ssh -o StrictHostKeyChecking=no root@${server_ip} "docker run -i -t -d --name $container -p ${host_sshport}:${container_sshport} -p ${host_vncport}:${container_vncport} -p ${host_nginxport}:${container_nginxport} ${image_name,,} /bin/bash"
 }
 
 
