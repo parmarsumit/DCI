@@ -10,6 +10,15 @@
       <scanQueueFor>DISABLED</scanQueueFor>
       <blockingJobs></blockingJobs>
     </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>server_ip</name>
+          <description></description>
+          <defaultValue></defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
   </properties>
   <scm class="hudson.scm.NullSCM"/>
   <canRoam>true</canRoam>
@@ -25,27 +34,22 @@ source /var/lib/jenkins/JobScripts/create_container_html.sh
 source /var/lib/jenkins/JobScripts/jenkins.properties
 source /var/lib/jenkins/JobScripts/git_functions_new.sh
 
-ssh root@{SERVER_IP} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb/results &amp;&amp; rm -f *.xml&quot;
+ssh root@${server_ip} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb/results &amp;&amp; rm -f *.xml&quot;
 
-ssh root@{SERVER_IP} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb/tests/ &amp;&amp; ./bin/behat features --format junit --out ../results/&quot;
+ssh root@${server_ip} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb/tests/ &amp;&amp; ./bin/behat features --format junit --out ../results/&quot;
 
 rm -rf results
 
 mkdir -p results
 
-scp -P 4940 root@{SERVER_IP}:/usr/share/nginx/www/ProgrammableWeb/results/*.xml results/
-
-git_last_commit  ${WORKSPACE} ${BRANCH_NAME}
-
-compare_commit_id
+scp -P 4940 root@${server_ip}:/usr/share/nginx/www/ProgrammableWeb/results/*.xml results/
 </command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
-    <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.2-beta-4">
+    <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.8">
       <testResults>results/*.xml</testResults>
       <keepLongStdio>false</keepLongStdio>
-      <testDataPublishers/>
       <healthScaleFactor>1.0</healthScaleFactor>
     </hudson.tasks.junit.JUnitResultArchiver>
     <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher plugin="flexible-publish@0.15.2">
@@ -55,7 +59,7 @@ compare_commit_id
           <publisherList>
             <EnvInjectBuilder plugin="envinject@1.92.1">
               <info>
-                <propertiesFilePath>/tmp/{feature_branch}mail.txt</propertiesFilePath>
+                <propertiesFilePath>/tmp/{feature_branch}.txt</propertiesFilePath>
               </info>
             </EnvInjectBuilder>
           </publisherList>
@@ -124,20 +128,6 @@ compare_commit_id
       <saveOutput>false</saveOutput>
       <disabled>false</disabled>
     </hudson.plugins.emailext.ExtendedEmailPublisher>
-    <hudson.plugins.parameterizedtrigger.BuildTrigger plugin="parameterized-trigger@2.28">
-      <configs>
-        <hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
-          <configs>
-            <hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
-              <properties>server_ip={SERVER_IP}</properties>
-            </hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
-          </configs>
-          <projects>Delete_server</projects>
-          <condition>SUCCESS</condition>
-          <triggerWithNoParameters>false</triggerWithNoParameters>
-        </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
-      </configs>
-    </hudson.plugins.parameterizedtrigger.BuildTrigger>
   </publishers>
   <buildWrappers/>
 </project>

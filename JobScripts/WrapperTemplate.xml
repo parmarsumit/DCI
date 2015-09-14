@@ -21,7 +21,6 @@
     <branches>
       <hudson.plugins.git.BranchSpec>
         <name>*/{feature_branch}</name>
-
       </hudson.plugins.git.BranchSpec>
     </branches>
     <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
@@ -53,7 +52,7 @@ HOST_SSH_PORT=4940
 
 BRANCH_NAME={feature_branch}
 
-SERVER_NAME={feature_branch}Server
+SERVER_NAME={feature_branch}
 
 echo &quot;Launching Instances..&quot;
 instance_id=`python ~/JobScripts/manage_instance.py &apos;launch_instance(&quot;&apos;&quot;$SERVER_NAME&quot;&apos;&quot;,&quot;&apos;&quot;$IMAGE&quot;&apos;&quot;,&quot;&apos;&quot;$SIZE&quot;&apos;&quot;,&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$REGION&quot;&apos;&quot;,&quot;&apos;&quot;$SSH_ID&quot;&apos;&quot;)&apos;`
@@ -64,8 +63,11 @@ echo &quot;Get server ip&quot;
 server_ip=`python ~/JobScripts/manage_instance.py &apos;get_server_ip(&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$instance_id&quot;&apos;&quot;)&apos;`
 
 
+echo &quot;$instance_id $server_ip $BRANCH_NAME&quot; &gt;&gt; ${JENKINS_HOME}/portlookup/server_info
+
 echo &quot;install docker..&quot;
 install_docker ${server_ip}
+
 
 echo &quot;Copy Docker image..&quot;
 copy_docker_image ${JENKINS_HOME} {feature_branch} ${server_ip}
@@ -102,15 +104,11 @@ ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/Programm
 
 ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/ProgrammableWeb/tests &amp;&amp; php composer.phar update&quot;
 
-get_committers_email PW-2976-Add-Sitelinks ${BUILD_ID}
+get_committers_email {feature_branch} ${BUILD_ID}
 
-echo &quot;SSH=${HOST_SSH_PORT}&quot; &gt; /var/lib/jenkins/jobs/prodMultiJob/env.properties
-
-server_ip=${server_ip}
-
-git_last_commit  ${WORKSPACE} {feature_branch}
-
-compare_commit_id</command>
+#echo &quot;SSH=${HOST_SSH_PORT}&quot; &gt; /var/lib/jenkins/jobs/prodMultiJob/env.properties
+echo &quot;server_ip=${server_ip}&quot;  &gt; /var/lib/jenkins/jobs/{feature_branch}MultiJob/env.properties
+</command>
     </hudson.tasks.Shell>
     <com.tikal.jenkins.plugins.multijob.MultiJobBuilder>
       <phaseName>First level Code Checks</phaseName>
@@ -126,7 +124,14 @@ compare_commit_id</command>
           <enableCondition>false</enableCondition>
           <abortAllJob>false</abortAllJob>
           <condition></condition>
-          <configs class="empty-list"/>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.FileBuildParameters plugin="parameterized-trigger@2.28">
+              <propertiesFile>/var/lib/jenkins/jobs/{feature_branch}MultiJob/env.properties</propertiesFile>
+              <failTriggerOnMissing>false</failTriggerOnMissing>
+              <useMatrixChild>false</useMatrixChild>
+              <onlyExactRuns>false</onlyExactRuns>
+            </hudson.plugins.parameterizedtrigger.FileBuildParameters>
+          </configs>
           <killPhaseOnJobResultCondition>NEVER</killPhaseOnJobResultCondition>
           <buildOnlyIfSCMChanges>false</buildOnlyIfSCMChanges>
         </com.tikal.jenkins.plugins.multijob.PhaseJobsConfig>
@@ -141,7 +146,14 @@ compare_commit_id</command>
           <enableCondition>false</enableCondition>
           <abortAllJob>false</abortAllJob>
           <condition></condition>
-          <configs class="empty-list"/>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.FileBuildParameters plugin="parameterized-trigger@2.28">
+              <propertiesFile>/var/lib/jenkins/jobs/{feature_branch}MultiJob/env.properties</propertiesFile>
+              <failTriggerOnMissing>false</failTriggerOnMissing>
+              <useMatrixChild>false</useMatrixChild>
+              <onlyExactRuns>false</onlyExactRuns>
+            </hudson.plugins.parameterizedtrigger.FileBuildParameters>
+          </configs>
           <killPhaseOnJobResultCondition>NEVER</killPhaseOnJobResultCondition>
           <buildOnlyIfSCMChanges>false</buildOnlyIfSCMChanges>
         </com.tikal.jenkins.plugins.multijob.PhaseJobsConfig>
@@ -149,21 +161,6 @@ compare_commit_id</command>
       <continuationCondition>ALWAYS</continuationCondition>
     </com.tikal.jenkins.plugins.multijob.MultiJobBuilder>
   </builders>
-  <publishers>
-    <hudson.plugins.parameterizedtrigger.BuildTrigger plugin="parameterized-trigger@2.28">
-      <configs>
-        <hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
-          <configs>
-            <hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
-              <properties>server_ip=${server_ip}</properties>
-            </hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
-          </configs>
-          <projects>Delete_server</projects>
-          <condition>UNSTABLE</condition>
-          <triggerWithNoParameters>false</triggerWithNoParameters>
-        </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
-      </configs>
-    </hudson.plugins.parameterizedtrigger.BuildTrigger>
-  </publishers>
+  <publishers/>
   <buildWrappers/>
 </com.tikal.jenkins.plugins.multijob.MultiJobProject>

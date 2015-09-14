@@ -6,11 +6,11 @@ createJobConfigFromTemplate(){
     path_job_template=$1
     JOB_NAME=$2
     TARGET=$3
-    IP=$4
+#    IP=$4
 
     cp "${path_job_template}" "${TARGET}"
     replaceTextInFile ${TARGET} {feature_branch} ${JOB_NAME}
-    replaceTextInFile ${TARGET} {SERVER_IP} ${IP}
+ #   replaceTextInFile ${TARGET} {SERVER_IP} ${IP}
 }
 
 createJob(){
