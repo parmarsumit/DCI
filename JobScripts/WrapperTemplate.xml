@@ -44,45 +44,71 @@
 source /var/lib/jenkins/JobScripts/util_functions.sh
 source /var/lib/jenkins/JobScripts/create_container_html.sh
 source /var/lib/jenkins/JobScripts/git_functions.sh
-source /var/lib/jenkins/JobScripts/docker_functions.new.sh
+source /var/lib/jenkins/JobScripts/docker_functions.sh
 source /var/lib/jenkins/JobScripts/git_functions_new.sh
+source /var/lib/jenkins/JobScripts/jenkins.properties
 
 HOST_SSH_PORT=4940
 
-ssh root@{SERVER_IP} -p ${HOST_SSH_PORT} &quot;rm -rf /usr/share/nginx/www/ProgrammableWeb&quot;
+BRANCH_NAME={feature_branch}
+
+SERVER_NAME={feature_branch}
+
+echo &quot;Launching Instances..&quot;
+instance_id=`python ~/JobScripts/manage_instance.py &apos;launch_instance(&quot;&apos;&quot;$SERVER_NAME&quot;&apos;&quot;,&quot;&apos;&quot;$IMAGE&quot;&apos;&quot;,&quot;&apos;&quot;$SIZE&quot;&apos;&quot;,&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$REGION&quot;&apos;&quot;,&quot;&apos;&quot;$SSH_ID&quot;&apos;&quot;)&apos;`
+
+sleep 3m
+
+echo &quot;Get server ip&quot;
+server_ip=`python ~/JobScripts/manage_instance.py &apos;get_server_ip(&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$instance_id&quot;&apos;&quot;)&apos;`
+
+
+echo &quot;$instance_id $server_ip $BRANCH_NAME&quot; &gt;&gt; ${JENKINS_HOME}/portlookup/server_info
+
+echo &quot;install docker..&quot;
+install_docker ${server_ip}
+
+
+echo &quot;Copy Docker image..&quot;
+copy_docker_image ${JENKINS_HOME} {feature_branch} ${server_ip}
+
+sleep 3m
+
+echo &quot;Creating container..&quot;
+create_container_at_server &quot;${BRANCH_NAME}&quot; 4940 22 5901 5901 8292 80 ${server_ip}
+
+sleep 3m
+
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;rm -rf /usr/share/nginx/www/ProgrammableWeb&quot;
 
 echo &quot;Copying code.&quot;;
-copy_git_project {SERVER_IP} ${HOST_SSH_PORT} ${WORKSPACE}
+copy_git_project ${server_ip} ${HOST_SSH_PORT} ${WORKSPACE}
 
 echo &quot;Linking to files and settings already present on the container.&quot;;
-ssh root@{SERVER_IP} -p ${HOST_SSH_PORT} &quot;ln -s /data/files /usr/share/nginx/www/ProgrammableWeb/sites/default/files&quot;;
-ssh root@{SERVER_IP} -p ${HOST_SSH_PORT} &quot;chown -R www-data /usr/share/nginx/www/ProgrammableWeb/sites/default/files&quot;;
-ssh root@{SERVER_IP} -p ${HOST_SSH_PORT} &quot;ln -s /data/settings.php /usr/share/nginx/www/ProgrammableWeb/sites/default/settings.php&quot;;
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;ln -s /data/files /usr/share/nginx/www/ProgrammableWeb/sites/default/files&quot;;
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;chown -R www-data /usr/share/nginx/www/ProgrammableWeb/sites/default/files&quot;;
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;ln -s /data/settings.php /usr/share/nginx/www/ProgrammableWeb/sites/default/settings.php&quot;;
 
-change_settings {SERVER_IP} ${HOST_SSH_PORT} 
+change_settings ${server_ip} ${HOST_SSH_PORT} 
 
-copy_setting_files {SERVER_IP} ${HOST_SSH_PORT} ${JENKINS_HOME}
+copy_setting_files ${server_ip} ${HOST_SSH_PORT} ${JENKINS_HOME}
 
-ssh root@{SERVER_IP} -p ${HOST_SSH_PORT} &quot;service php5-fpm restart&quot;
-ssh root@{SERVER_IP} -p ${HOST_SSH_PORT} &quot;service nginx restart&quot;
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;service php5-fpm restart&quot;
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;service nginx restart&quot;
 
-ssh root@{SERVER_IP} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/ProgrammableWeb/sites &amp;&amp; drush cc all&quot;
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/ProgrammableWeb/sites &amp;&amp; drush cc all&quot;
 
-ssh root@{SERVER_IP} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/ProgrammableWeb/tests &amp;&amp; rm -rf vendor&quot;
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/ProgrammableWeb/tests &amp;&amp; rm -rf vendor&quot;
 
-ssh root@{SERVER_IP} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/ProgrammableWeb/tests &amp;&amp; php composer.phar self-update&quot;
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/ProgrammableWeb/tests &amp;&amp; php composer.phar self-update&quot;
 
-ssh root@{SERVER_IP} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/ProgrammableWeb/tests &amp;&amp; php composer.phar update&quot;
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/ProgrammableWeb/tests &amp;&amp; php composer.phar update&quot;
 
 get_committers_email {feature_branch} ${BUILD_ID}
 
-echo &quot;SSH=${HOST_SSH_PORT}&quot; &gt; /var/lib/jenkins/jobs/prodMultiJob/env.properties
-
-server_ip={SERVER_IP}
-
-git_last_commit  ${WORKSPACE} ${BRANCH_NAME}
-
-compare_commit_id</command>
+#echo &quot;SSH=${HOST_SSH_PORT}&quot; &gt; /var/lib/jenkins/jobs/prodMultiJob/env.properties
+echo &quot;server_ip=${server_ip}&quot;  &gt; /var/lib/jenkins/jobs/{feature_branch}MultiJob/env.properties
+</command>
     </hudson.tasks.Shell>
     <com.tikal.jenkins.plugins.multijob.MultiJobBuilder>
       <phaseName>First level Code Checks</phaseName>
@@ -98,7 +124,14 @@ compare_commit_id</command>
           <enableCondition>false</enableCondition>
           <abortAllJob>false</abortAllJob>
           <condition></condition>
-          <configs class="empty-list"/>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.FileBuildParameters plugin="parameterized-trigger@2.28">
+              <propertiesFile>/var/lib/jenkins/jobs/{feature_branch}MultiJob/env.properties</propertiesFile>
+              <failTriggerOnMissing>false</failTriggerOnMissing>
+              <useMatrixChild>false</useMatrixChild>
+              <onlyExactRuns>false</onlyExactRuns>
+            </hudson.plugins.parameterizedtrigger.FileBuildParameters>
+          </configs>
           <killPhaseOnJobResultCondition>NEVER</killPhaseOnJobResultCondition>
           <buildOnlyIfSCMChanges>false</buildOnlyIfSCMChanges>
         </com.tikal.jenkins.plugins.multijob.PhaseJobsConfig>
@@ -113,7 +146,14 @@ compare_commit_id</command>
           <enableCondition>false</enableCondition>
           <abortAllJob>false</abortAllJob>
           <condition></condition>
-          <configs class="empty-list"/>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.FileBuildParameters plugin="parameterized-trigger@2.28">
+              <propertiesFile>/var/lib/jenkins/jobs/{feature_branch}MultiJob/env.properties</propertiesFile>
+              <failTriggerOnMissing>false</failTriggerOnMissing>
+              <useMatrixChild>false</useMatrixChild>
+              <onlyExactRuns>false</onlyExactRuns>
+            </hudson.plugins.parameterizedtrigger.FileBuildParameters>
+          </configs>
           <killPhaseOnJobResultCondition>NEVER</killPhaseOnJobResultCondition>
           <buildOnlyIfSCMChanges>false</buildOnlyIfSCMChanges>
         </com.tikal.jenkins.plugins.multijob.PhaseJobsConfig>
@@ -121,21 +161,6 @@ compare_commit_id</command>
       <continuationCondition>ALWAYS</continuationCondition>
     </com.tikal.jenkins.plugins.multijob.MultiJobBuilder>
   </builders>
-  <publishers>
-    <hudson.plugins.parameterizedtrigger.BuildTrigger plugin="parameterized-trigger@2.28">
-      <configs>
-        <hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
-          <configs>
-            <hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
-              <properties>server_ip={SERVER_IP}</properties>
-            </hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
-          </configs>
-          <projects>Delete_server</projects>
-          <condition>UNSTABLE</condition>
-          <triggerWithNoParameters>false</triggerWithNoParameters>
-        </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
-      </configs>
-    </hudson.plugins.parameterizedtrigger.BuildTrigger>
-  </publishers>
+  <publishers/>
   <buildWrappers/>
 </com.tikal.jenkins.plugins.multijob.MultiJobProject>
