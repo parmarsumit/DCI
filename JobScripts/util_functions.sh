@@ -170,13 +170,13 @@ copy_files() {
         ssh_port=$2
 	CODE_FILES_DIR=$3
 	echo "Copy files"
-        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "rm -rf /data/files"
-        time scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${CODE_FILES_DIR}/data/files root@${server_ip}:/data/
+	ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "rm -rf /var/data/files"
+	ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "mkdir -p /var/data/"
+        time scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${CODE_FILES_DIR}/data/files root@${server_ip}:/var/data/
 
         ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "rm -rf /data/settings.php"
-        scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${CODE_FILES_DIR}/data/settings.php root@${server_ip}:/data/
-
-        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "chown -R www-data /data/files"
+        scp -r -o StrictHostKeyChecking=no -P ${ssh_port} ${CODE_FILES_DIR}/data/settings.php root@${server_ip}:/var/data/
+        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "chown -R www-data /var/data/files"
 }
 
 

@@ -47,6 +47,7 @@ source /var/lib/jenkins/JobScripts/git_functions.sh
 source /var/lib/jenkins/JobScripts/docker_functions.sh
 source /var/lib/jenkins/JobScripts/git_functions_new.sh
 source /var/lib/jenkins/JobScripts/jenkins.properties
+source /var/lib/jenkins/JobScripts/file_functions.sh
 
 HOST_SSH_PORT=4940
 
@@ -62,8 +63,12 @@ sleep 3m
 echo &quot;Get server ip&quot;
 server_ip=`python ~/JobScripts/manage_instance.py &apos;get_server_ip(&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$instance_id&quot;&apos;&quot;)&apos;`
 
+lineNumber=`getLineNoMatchingRegex ${JENKINS_HOME}/portlookup/server_mapping ${BRANCH_NAME}`
 
-echo &quot;$instance_id $server_ip $BRANCH_NAME&quot; &gt;&gt; ${JENKINS_HOME}/portlookup/server_info
+updateColumn ${JENKINS_HOME}/portlookup/server_mapping ${lineNumber} 3 ${instance_id}
+
+updateColumn ${JENKINS_HOME}/portlookup/server_mapping ${lineNumber} 4 ${server_ip}
+
 
 echo &quot;install docker..&quot;
 install_docker ${server_ip}
