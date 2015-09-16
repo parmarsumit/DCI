@@ -54,7 +54,7 @@
 source /var/lib/jenkins/JobScripts/git_functions.sh
 source /var/lib/jenkins/JobScripts/jenkins_functions.sh
 source /var/lib/jenkins/JobScripts/util_functions.sh
-source /var/lib/jenkins/JobScripts/docker_functions_new.sh
+source /var/lib/jenkins/JobScripts/docker_functions.sh
 source /var/lib/jenkins/JobScripts/create_container_html.sh
 source /var/lib/jenkins/JobScripts/jenkins.properties
 source /var/lib/jenkins/JobScripts/git_functions_new.sh
@@ -63,40 +63,43 @@ source /var/lib/jenkins/JobScripts/git_functions_new.sh
 SERVER_NAME=${BRANCH_NAME}Server
 
 
-echo &quot;Launching Instances..&quot;
-instance_id=`python ~/JobScripts/manage_instance.py &apos;launch_instance(&quot;&apos;&quot;$SERVER_NAME&quot;&apos;&quot;,&quot;&apos;&quot;$IMAGE&quot;&apos;&quot;,&quot;&apos;&quot;$SIZE&quot;&apos;&quot;,&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$REGION&quot;&apos;&quot;,&quot;&apos;&quot;$SSH_ID&quot;&apos;&quot;)&apos;`
+#echo &quot;Launching Instances..&quot;
+#instance_id=`python ~/JobScripts/manage_instance.py &apos;launch_instance(&quot;&apos;&quot;$SERVER_NAME&quot;&apos;&quot;,&quot;&apos;&quot;$IMAGE&quot;&apos;&quot;,&quot;&apos;&quot;$SIZE&quot;&apos;&quot;,&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$REGION&quot;&apos;&quot;,&quot;&apos;&quot;$SSH_ID&quot;&apos;&quot;)&apos;`
 
-sleep 3m
+#sleep 3m
 
-echo &quot;Get server ip&quot;
-server_ip=`python ~/JobScripts/manage_instance.py &apos;get_server_ip(&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$instance_id&quot;&apos;&quot;)&apos;`
+#echo &quot;Get server ip&quot;
+#server_ip=`python ~/JobScripts/manage_instance.py &apos;get_server_ip(&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$instance_id&quot;&apos;&quot;)&apos;`
 
-createJobConfigFromTemplate ~/JobScripts/WrapperTemplate.xml ${BRANCH_NAME} /tmp/config1.xml &quot;$server_ip&quot;
-createJobConfigFromTemplate ~/JobScripts/UnitTestTemplate.xml ${BRANCH_NAME} /tmp/config2.xml &quot;$server_ip&quot;
-createJobConfigFromTemplate ~/JobScripts/FunctionalTestTemplate.xml ${BRANCH_NAME} /tmp/config3.xml &quot;$server_ip&quot;
-createJobConfigFromTemplate ~/JobScripts/StaticCodeAnalysisTemplate.xml ${BRANCH_NAME} /tmp/config4.xml &quot;$server_ip&quot;
+createJobConfigFromTemplate ~/JobScripts/WrapperTemplate.xml ${BRANCH_NAME} /tmp/config1.xml 
+createJobConfigFromTemplate ~/JobScripts/UnitTestTemplate.xml ${BRANCH_NAME} /tmp/config2.xml 
+createJobConfigFromTemplate ~/JobScripts/FunctionalTestTemplate.xml ${BRANCH_NAME} /tmp/config3.xml 
+createJobConfigFromTemplate ~/JobScripts/StaticCodeAnalysisTemplate.xml ${BRANCH_NAME} /tmp/config4.xml
 
-git_last_commit  ${WORKSPACE} ${BRANCH_NAME}
+echo &quot;${SERVER_NAME} ${BRANCH_NAME} instance_id server_ip 4940 5901 8292&quot; &gt;&gt; ${JENKINS_HOME}/portlookup/server_mapping
 
-echo &quot;${SERVER_NAME} ${BRANCH_NAME} ${instance_id} ${server_ip} 4940 5901 8292&quot; &gt;&gt; ${JENKINS_HOME}/portlookup/server_mapping
+#echo &quot;install docker..&quot;
+#install_docker ${server_ip}
 
-echo &quot;install docker..&quot;
-install_docker ${server_ip}
-
-echo &quot;Copy Docker image..&quot;
-copy_docker_image ${JENKINS_HOME} ${server_ip}
+#echo &quot;Copy Docker image..&quot;
+#copy_docker_image ${JENKINS_HOME} ${server_ip}
 
 echo &quot;create docker container&quot;
-create_container &quot;${BRANCH_NAME}Server&quot; 4940 22 5901 5901 8292 80 vnc_php_test ${server_ip}
+create_container &quot;${BRANCH_NAME}&quot; 4940 22 5901 5901 8292 80 vnc_php_test
 
 sleep 1m
 
 echo &quot;Copying the database to the container.&quot;
-setup_mysql &quot;${server_ip}&quot; &quot;4940&quot; &quot;${JENKINS_HOME}&quot;
+setup_mysql &quot;localhost&quot; &quot;4940&quot; &quot;${JENKINS_HOME}&quot;
 
 echo &quot;Copying the files to the container.&quot;
-copy_files &quot;${server_ip}&quot; &quot;4940&quot; &quot;${JENKINS_HOME}&quot;
+copy_files &quot;localhost&quot; &quot;4940&quot; &quot;${JENKINS_HOME}&quot;
 
+create_image_from_container ${BRANCH_NAME}
+sleep 2m
+create_image_dump ${BRANCH_NAME} ${JENKINS_HOME}
+
+delete_container ${BRANCH_NAME}
 
 createJob &quot;${BRANCH_NAME}MultiJob&quot; /tmp/config1.xml
 createJob &quot;${BRANCH_NAME}UnitTest&quot; /tmp/config2.xml
