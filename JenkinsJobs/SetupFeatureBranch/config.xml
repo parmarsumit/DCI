@@ -62,15 +62,6 @@ source /var/lib/jenkins/JobScripts/git_functions_new.sh
 
 SERVER_NAME=${BRANCH_NAME}Server
 
-
-#echo &quot;Launching Instances..&quot;
-#instance_id=`python ~/JobScripts/manage_instance.py &apos;launch_instance(&quot;&apos;&quot;$SERVER_NAME&quot;&apos;&quot;,&quot;&apos;&quot;$IMAGE&quot;&apos;&quot;,&quot;&apos;&quot;$SIZE&quot;&apos;&quot;,&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$REGION&quot;&apos;&quot;,&quot;&apos;&quot;$SSH_ID&quot;&apos;&quot;)&apos;`
-
-#sleep 3m
-
-#echo &quot;Get server ip&quot;
-#server_ip=`python ~/JobScripts/manage_instance.py &apos;get_server_ip(&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$instance_id&quot;&apos;&quot;)&apos;`
-
 createJobConfigFromTemplate ~/JobScripts/WrapperTemplate.xml ${BRANCH_NAME} /tmp/config1.xml 
 createJobConfigFromTemplate ~/JobScripts/UnitTestTemplate.xml ${BRANCH_NAME} /tmp/config2.xml 
 createJobConfigFromTemplate ~/JobScripts/FunctionalTestTemplate.xml ${BRANCH_NAME} /tmp/config3.xml 
@@ -78,25 +69,23 @@ createJobConfigFromTemplate ~/JobScripts/StaticCodeAnalysisTemplate.xml ${BRANCH
 
 echo &quot;${SERVER_NAME} ${BRANCH_NAME} instance_id server_ip 4940 5901 8292&quot; &gt;&gt; ${JENKINS_HOME}/portlookup/server_mapping
 
-#echo &quot;install docker..&quot;
-#install_docker ${server_ip}
-
-#echo &quot;Copy Docker image..&quot;
-#copy_docker_image ${JENKINS_HOME} ${server_ip}
-
 echo &quot;create docker container&quot;
 create_container &quot;${BRANCH_NAME}&quot; 4940 22 5901 5901 8292 80 vnc_php_test
 
 sleep 1m
 
-echo &quot;Copying the database to the container.&quot;
+echo &quot;Copying the database to the container..&quot;
 setup_mysql &quot;localhost&quot; &quot;4940&quot; &quot;${JENKINS_HOME}&quot;
 
-echo &quot;Copying the files to the container.&quot;
+echo &quot;Copying the files to the container..&quot;
 copy_files &quot;localhost&quot; &quot;4940&quot; &quot;${JENKINS_HOME}&quot;
 
+echo &quot;create image from container..&quot;
 create_image_from_container ${BRANCH_NAME}
+
 sleep 2m
+
+echo &quot;create_image_dump..&quot;
 create_image_dump ${BRANCH_NAME} ${JENKINS_HOME}
 
 delete_container ${BRANCH_NAME}
@@ -111,10 +100,10 @@ echo &quot;SSH =&gt; 4940&quot;
 echo &quot;VNC =&gt; 5901&quot;
 echo &quot;NGINX =&gt; 8292&quot;
 
-BRANCH_AUTHOR_EMAIL=`$(get_branch_author_email ${BRANCH_NAME})`
-echo $BRANCH_AUTHOR_EMAIL
-echo &quot;I&apos;ve to send mail to $BRANCH_AUTHOR_EMAIL about the branch getting tracked by CI system&quot;
-echo &quot;EMAIL=$BRANCH_AUTHOR_EMAIL&quot; &gt; email.txt</command>
+#BRANCH_AUTHOR_EMAIL=`$(get_branch_author_email ${BRANCH_NAME})`
+#echo $BRANCH_AUTHOR_EMAIL
+#echo &quot;I&apos;ve to send mail to $BRANCH_AUTHOR_EMAIL about the branch getting tracked by CI system&quot;
+#echo &quot;EMAIL=$BRANCH_AUTHOR_EMAIL&quot; &gt; email.txt</command>
     </hudson.tasks.Shell>
     <EnvInjectBuilder plugin="envinject@1.92.1">
       <info>
