@@ -60,7 +60,7 @@ scp -P 4940 root@${server_ip}:/usr/share/nginx/www/ProgrammableWeb/staticresults
           <publisherList>
             <EnvInjectBuilder plugin="envinject@1.92.1">
               <info>
-                <propertiesFilePath>/tmp/{feature_branch}.txt</propertiesFilePath>
+                <propertiesFilePath>/tmp/{feature_branch}mail.txt</propertiesFilePath>
               </info>
             </EnvInjectBuilder>
           </publisherList>

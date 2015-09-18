@@ -193,8 +193,8 @@ change_settings() {
         ssh_port=$2
         ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "cd /usr/share/nginx/www/ProgrammableWeb/sites/default && chown -R www-data:root files && chown root:root settings.php"
         ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "cd /usr/share/nginx/www/ProgrammableWeb/sites/default && chmod 644 settings.php"
-        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "cd /data && chown -R www-data:root files && chown root:root settings.php"
-        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "cd /data && chmod 644 settings.php"
+        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "cd /var/data && chown -R www-data:root files && chown root:root settings.php"
+        ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "cd /var/data && chmod 644 settings.php"
 }
 
 copy_setting_files() {
@@ -207,3 +207,9 @@ copy_setting_files() {
         scp -o StrictHostKeyChecking=no -P ${ssh_port} ${JENKINS_HOME}/data/composer.json root@${server_ip}:/usr/share/nginx/www/ProgrammableWeb/tests/
 }
 
+get_instance_id(){
+	branch_name=$1
+	JENKINS_HOME=$2
+
+        cat ${JENKINS_HOME}/portlookup/server_mapping | grep ${branch_name} | cut -d ' ' -f3
+}

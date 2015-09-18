@@ -90,9 +90,10 @@ echo &quot;Copying code.&quot;;
 copy_git_project ${server_ip} ${HOST_SSH_PORT} ${WORKSPACE}
 
 echo &quot;Linking to files and settings already present on the container.&quot;;
-ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;ln -s /data/files /usr/share/nginx/www/ProgrammableWeb/sites/default/files&quot;;
+
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;ln -s /var/data/files /usr/share/nginx/www/ProgrammableWeb/sites/default/files&quot;;
 ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;chown -R www-data /usr/share/nginx/www/ProgrammableWeb/sites/default/files&quot;;
-ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;ln -s /data/settings.php /usr/share/nginx/www/ProgrammableWeb/sites/default/settings.php&quot;;
+ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;ln -s /var/data/settings.php /usr/share/nginx/www/ProgrammableWeb/sites/default/settings.php&quot;;
 
 change_settings ${server_ip} ${HOST_SSH_PORT} 
 
@@ -111,8 +112,10 @@ ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/Programm
 
 get_committers_email {feature_branch} ${BUILD_ID}
 
-#echo &quot;SSH=${HOST_SSH_PORT}&quot; &gt; /var/lib/jenkins/jobs/prodMultiJob/env.properties
-echo &quot;server_ip=${server_ip}&quot;  &gt; /var/lib/jenkins/jobs/{feature_branch}MultiJob/env.properties
+rm -rf /var/lib/jenkins/jobs/{feature_branch}MultiJob/env.properties
+
+echo &quot;server_ip=${server_ip}&quot;  &gt;&gt; /var/lib/jenkins/jobs/{feature_branch}MultiJob/env.properties
+echo &quot;BRANCH_NAME=${BRANCH_NAME}&quot; &gt;&gt; /var/lib/jenkins/jobs/{feature_branch}MultiJob/env.properties
 </command>
     </hudson.tasks.Shell>
     <com.tikal.jenkins.plugins.multijob.MultiJobBuilder>

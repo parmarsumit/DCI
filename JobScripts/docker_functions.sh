@@ -24,6 +24,8 @@ create_container_at_server(){
         image_name="${BRANCH_NAME}_IMAGE"
 	server_ip=$8
         ssh -o StrictHostKeyChecking=no root@${server_ip} "docker run  -d --name $container -p ${host_sshport}:${container_sshport} -p ${host_vncport}:${container_vncport} -p ${host_nginxport}:${container_nginxport} ${image_name,,} /bin/sh -c "'"/bin/sh -c bash -C /usr/local/etc/spawn-desktop.sh && /etc/init.d/memcached start && /etc/init.d/mysql start && /etc/init.d/php5-fpm start && /etc/init.d/nginx start && /etc/init.d/jetty start && /usr/sbin/sshd -D && tailf /var/log/lastlog"'""
+	sleep 3m
+	ssh -o StrictHostKeyChecking=no root@${server_ip} -p ${host_sshport} "rm -rf /tmp/.*;/usr/local/etc/spawn-desktop.sh"
 }
 
 
