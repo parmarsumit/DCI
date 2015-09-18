@@ -1,0 +1,55 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.1">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>BRANCH_NAME</name>
+          <description></description>
+          <defaultValue></defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+source /var/lib/jenkins/JobScripts/jenkins_functions.sh
+source /var/lib/jenkins/JobScripts/util_functions.sh
+source /var/lib/jenkins/JobScripts/docker_functions.sh
+source /var/lib/jenkins/JobScripts/create_container_html.sh
+source /var/lib/jenkins/JobScripts/git_functions.sh
+source /var/lib/jenkins/JobScripts/shell_functions.sh
+source /var/lib/jenkins/JobScripts/jenkins.properties
+
+deleteJob &quot;${BRANCH_NAME}MultiJob&quot;
+deleteJob &quot;${BRANCH_NAME}UnitTest&quot;
+deleteJob &quot;${BRANCH_NAME}FunctionalTest&quot;
+deleteJob &quot;${BRANCH_NAME}StaticCodeAnalysis&quot;
+
+delete_image ${BRANCH_NAME}
+#linenum=`findLineNumber ${BRANCH_NAME} /var/lib/jenkins/branch_changes/branch_list`
+#deleteLine $linenum /var/lib/jenkins/branch_changes/branch_list
+
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>
