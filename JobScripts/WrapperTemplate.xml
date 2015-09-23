@@ -45,9 +45,10 @@ source /var/lib/jenkins/JobScripts/util_functions.sh
 source /var/lib/jenkins/JobScripts/create_container_html.sh
 source /var/lib/jenkins/JobScripts/git_functions.sh
 source /var/lib/jenkins/JobScripts/docker_functions.sh
-source /var/lib/jenkins/JobScripts/git_functions_new.sh
 source /var/lib/jenkins/JobScripts/jenkins.properties
 source /var/lib/jenkins/JobScripts/file_functions.sh
+source /var/lib/jenkins/JobScripts/manage_instance.sh
+source /var/lib/jenkins/JobScripts/service_functions.sh
 
 HOST_SSH_PORT=4940
 
@@ -55,12 +56,12 @@ BRANCH_NAME={feature_branch}
 
 SERVER_NAME={feature_branch}
 
-echo &quot;Launching Instances..&quot;
-instance_id=`python ~/JobScripts/manage_instance.py &apos;launch_instance(&quot;&apos;&quot;$SERVER_NAME&quot;&apos;&quot;,&quot;&apos;&quot;$IMAGE&quot;&apos;&quot;,&quot;&apos;&quot;$SIZE&quot;&apos;&quot;,&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$REGION&quot;&apos;&quot;,&quot;&apos;&quot;$SSH_ID&quot;&apos;&quot;)&apos;`
+echo &quot;Launching Instance If Not Exist ..&quot;
+
+instance_id=`createServerIfNotExist ${BRANCH_NAME} &quot;${JENKINS_HOME}/portlookup/server_mapping&quot; ${SERVER_NAME} ${IMAGE} ${SIZE} ${ENDPOINT} ${TOKEN} ${REGION} ${SSH_ID}`
 
 sleep 3m
 
-echo &quot;Get server ip&quot;
 server_ip=`python ~/JobScripts/manage_instance.py &apos;get_server_ip(&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$instance_id&quot;&apos;&quot;)&apos;`
 
 lineNumber=`getLineNoMatchingRegex ${JENKINS_HOME}/portlookup/server_mapping ${BRANCH_NAME}`
@@ -70,19 +71,17 @@ updateColumn ${JENKINS_HOME}/portlookup/server_mapping ${lineNumber} 3 ${instanc
 updateColumn ${JENKINS_HOME}/portlookup/server_mapping ${lineNumber} 4 ${server_ip}
 
 
-echo &quot;install docker..&quot;
+echo &quot;Installing Docker..&quot;
 install_docker ${server_ip}
 
 
-echo &quot;Copy Docker image..&quot;
+echo &quot;Copying Docker Image..&quot;
 copy_docker_image ${JENKINS_HOME} {feature_branch} ${server_ip}
 
-sleep 3m
+sleep 1m
 
 echo &quot;Creating container..&quot;
 create_container_at_server &quot;${BRANCH_NAME}&quot; 4940 22 5901 5901 8292 80 ${server_ip}
-
-sleep 3m
 
 ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;rm -rf /usr/share/nginx/www/ProgrammableWeb&quot;
 
@@ -100,7 +99,7 @@ change_settings ${server_ip} ${HOST_SSH_PORT}
 copy_setting_files ${server_ip} ${HOST_SSH_PORT} ${JENKINS_HOME}
 
 ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;service php5-fpm restart&quot;
-ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;service nginx restart&quot;
+serviceNginxRestart ${server_ip} ${HOST_SSH_PORT}
 
 ssh root@${server_ip} -p ${HOST_SSH_PORT} &quot;cd /usr/share/nginx/www/ProgrammableWeb/sites &amp;&amp; drush cc all&quot;
 

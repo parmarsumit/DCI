@@ -14,4 +14,3 @@ function updateColumn(){
 
 	awk 'NR==lineNumber{$columnNumber=newValue}1' columnNumber=$columnNumber lineNumber=$lineNumber newValue=$newValue $fileName > tmp && mv tmp $fileName
 }
-
