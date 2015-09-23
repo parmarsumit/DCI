@@ -59,9 +59,9 @@ source /var/lib/jenkins/JobScripts/create_container_html.sh
 source /var/lib/jenkins/JobScripts/jenkins.properties
 source /var/lib/jenkins/JobScripts/git_functions_new.sh
 
-
 SERVER_NAME=${BRANCH_NAME}Server
 
+echo &quot;creating job config from template..&quot;
 createJobConfigFromTemplate ~/JobScripts/WrapperTemplate.xml ${BRANCH_NAME} /tmp/config1.xml 
 createJobConfigFromTemplate ~/JobScripts/UnitTestTemplate.xml ${BRANCH_NAME} /tmp/config2.xml 
 createJobConfigFromTemplate ~/JobScripts/FunctionalTestTemplate.xml ${BRANCH_NAME} /tmp/config3.xml 

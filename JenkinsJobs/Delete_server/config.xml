@@ -32,11 +32,19 @@
       <command>#!/bin/bash
 source /var/lib/jenkins/JobScripts/jenkins.properties
 source /var/lib/jenkins/JobScripts/util_functions.sh
+source /var/lib/jenkins/JobScripts/file_functions.sh
 
-instance_id=`get_instance_id ${BRANCH_NAME} ${JENKINS_HOME}` 
+instance_id=`get_instance_id ${BRANCH_NAME} ${JENKINS_HOME}`
 
 echo &quot;Delete instance&quot;
 python ~/JobScripts/manage_instance.py &apos;del_instance(&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$instance_id&quot;&apos;&quot;)&apos;
+
+
+lineNumber=`getLineNoMatchingRegex ${JENKINS_HOME}/portlookup/server_mapping ${BRANCH_NAME}`
+
+updateColumn ${JENKINS_HOME}/portlookup/server_mapping ${lineNumber} 3 instance_id
+
+updateColumn ${JENKINS_HOME}/portlookup/server_mapping ${lineNumber} 4 server_ip
 
 
 
