@@ -23,9 +23,15 @@ create_container_at_server(){
         container_nginxport=$7
         image_name="${BRANCH_NAME}_IMAGE"
 	server_ip=$8
-        ssh -o StrictHostKeyChecking=no root@${server_ip} "docker run  -d --name $container -p ${host_sshport}:${container_sshport} -p ${host_vncport}:${container_vncport} -p ${host_nginxport}:${container_nginxport} ${image_name,,} /bin/sh -c "'"/bin/sh -c bash -C /usr/local/etc/spawn-desktop.sh && /etc/init.d/memcached start && /etc/init.d/mysql start && /etc/init.d/php5-fpm start && /etc/init.d/nginx start && /etc/init.d/jetty start && /usr/sbin/sshd -D && tailf /var/log/lastlog"'"" >/dev/null 2>&1
-	sleep 3m
-	ssh -o StrictHostKeyChecking=no root@${server_ip} -p ${host_sshport} "rm -rf /tmp/.*;/usr/local/etc/spawn-desktop.sh" >/dev/null 2>&1
+	ssh -o StrictHostKeyChecking=no root@${server_ip} "docker ps | grep -wq ${container}"
+	if [ $? -eq 0 ]
+        then
+          echo "Container Already up"
+       	else
+          ssh -o StrictHostKeyChecking=no root@${server_ip} "docker run  -d --name $container -p ${host_sshport}:${container_sshport} -p ${host_vncport}:${container_vncport} -p ${host_nginxport}:${container_nginxport} ${image_name,,} /bin/sh -c "'"/bin/sh -c bash -C /usr/local/etc/spawn-desktop.sh && /etc/init.d/memcached start && /etc/init.d/mysql start && /etc/init.d/php5-fpm start && /etc/init.d/nginx start && /etc/init.d/jetty start && /usr/sbin/sshd -D && tailf /var/log/lastlog"'"" >/dev/null 2>&1
+	  sleep 3m
+	  ssh -o StrictHostKeyChecking=no root@${server_ip} -p ${host_sshport} "rm -rf /tmp/.*;/usr/local/etc/spawn-desktop.sh" >/dev/null 2>&1
+	fi
 }
 
 
@@ -55,11 +61,18 @@ create_image_dump() {
 
 delete_image() {
 	BRANCH_NAME=$1
-	DUMP_LOCATION=$2
+#	DUMP_LOCATION=$2
 	IMAGE_NAME="${BRANCH_NAME}_IMAGE"
 
-	rm -f ${DUMP_LOCATION}/${IMAGE_NAME,,}.tar
 	docker rmi ${IMAGE_NAME,,}
+}
+
+delete_image_dump() {
+	BRANCH_NAME=$1
+        DUMP_LOCATION=$2
+        IMAGE_NAME="${BRANCH_NAME}_IMAGE"
+
+        rm -f ${DUMP_LOCATION}/${IMAGE_NAME,,}.tar
 }
 
 install_docker() {
@@ -69,7 +82,6 @@ install_docker() {
         then
           echo "Docker Already Installed"
         else
-           echo "Installing Docker"
            ssh -o StrictHostKeyChecking=no root@${server_ip} "curl -sSL https://get.docker.com/ | sh"
         fi
 }
@@ -88,5 +100,6 @@ copy_docker_image(){
         	time scp -r -o StrictHostKeyChecking=no ${DUMP_LOCATION}/${IMAGE_NAME,,}.tar root@${server_ip}:docker.tar
         	echo "Loading Docker Images .."
         	ssh -o StrictHostKeyChecking=no root@${server_ip} "docker load < ~/docker.tar"
+		sleep 1m
 	fi
 }

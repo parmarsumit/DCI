@@ -152,7 +152,7 @@ setup_mysql() {
 	server_ip=$1
         ssh_port=$2
 	LOCAL_MYSQL_DATA_DIR=$3
-	echo $server_ip  $ssh_port $JENKINS_HOME
+#	echo $server_ip  $ssh_port $JENKINS_HOME
 	echo "Stop mysql service"
         ssh root@${server_ip} -o StrictHostKeyChecking=no -p ${ssh_port} "service mysql stop"
 	echo "Copy database"

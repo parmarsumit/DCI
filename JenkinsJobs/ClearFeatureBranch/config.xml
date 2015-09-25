@@ -37,15 +37,19 @@ source /var/lib/jenkins/JobScripts/create_container_html.sh
 source /var/lib/jenkins/JobScripts/git_functions.sh
 source /var/lib/jenkins/JobScripts/shell_functions.sh
 source /var/lib/jenkins/JobScripts/jenkins.properties
+source /var/lib/jenkins/JobScripts/file_functions.sh
 
 deleteJob &quot;${BRANCH_NAME}MultiJob&quot;
 deleteJob &quot;${BRANCH_NAME}UnitTest&quot;
 deleteJob &quot;${BRANCH_NAME}FunctionalTest&quot;
 deleteJob &quot;${BRANCH_NAME}StaticCodeAnalysis&quot;
 
-delete_image ${BRANCH_NAME}
-#linenum=`findLineNumber ${BRANCH_NAME} /var/lib/jenkins/branch_changes/branch_list`
-#deleteLine $linenum /var/lib/jenkins/branch_changes/branch_list
+delete_image_dump ${BRANCH_NAME} ${JENKINS_HOME}
+
+linenum=`findLineNumber &quot;${BRANCH_NAME}&quot; /var/lib/jenkins/portlookup/server_mapping`
+deleteLine $linenum /var/lib/jenkins/portlookup/server_mapping
+
+
 
 </command>
     </hudson.tasks.Shell>

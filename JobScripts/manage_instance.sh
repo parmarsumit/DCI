@@ -13,6 +13,7 @@ createServerIfNotExist(){
         if [ "instance_id" == $new_instance_id ] 
         then
     		python ~/JobScripts/manage_instance.py 'launch_instance("'"$SERVER_NAME"'","'"$IMAGE"'","'"$SIZE"'","'"$ENDPOINT"'","'"$TOKEN"'","'"$REGION"'","'"$SSH_ID"'")'
+		sleep 3m
         else   
                 echo "$new_instance_id"
         fi

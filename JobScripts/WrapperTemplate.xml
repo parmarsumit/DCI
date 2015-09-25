@@ -60,8 +60,6 @@ echo &quot;Launching Instance If Not Exist ..&quot;
 
 instance_id=`createServerIfNotExist ${BRANCH_NAME} &quot;${JENKINS_HOME}/portlookup/server_mapping&quot; ${SERVER_NAME} ${IMAGE} ${SIZE} ${ENDPOINT} ${TOKEN} ${REGION} ${SSH_ID}`
 
-sleep 3m
-
 server_ip=`python ~/JobScripts/manage_instance.py &apos;get_server_ip(&quot;&apos;&quot;$ENDPOINT&quot;&apos;&quot;,&quot;&apos;&quot;$TOKEN&quot;&apos;&quot;,&quot;&apos;&quot;$instance_id&quot;&apos;&quot;)&apos;`
 
 lineNumber=`getLineNoMatchingRegex ${JENKINS_HOME}/portlookup/server_mapping ${BRANCH_NAME}`

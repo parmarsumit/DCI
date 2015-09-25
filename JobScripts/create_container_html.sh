@@ -69,21 +69,23 @@ echo "</title></head>" >> $path
 echo "<body>" >> $path
 echo "<table width='100%' border='2'>" >> $path
 echo "<tr>" >> $path
-	echo "<th> Server name </th><th> SSH Port </th><th> VNC Port </th><th> Web Server Port </th><th> Wrapper Code Quality Status </th><th> Merge Status </th><th> Unit Tests Status </th><th> Functional Test Status </th><th> Static Code Analysis Status </th></tr>" >> $path
+	echo "<th> Server name </th> <th> Instance IP </th><th> SSH Port </th><th> VNC Port </th><th> Web Server Port </th><th> Wrapper Code Quality Status </th><th> Merge Status </th><th> Unit Tests Status </th><th> Functional Test Status </th><th> Static Code Analysis Status </th></tr>" >> $path
 while read -r line
 do
 	name=$line
 	echo "<tr>" >> $path
 	createCell `echo "$name" | cut -d " " -f1` $path
 
-	createCell `echo "$name" | cut -d " " -f2` $path
-
-	createCell `echo "$name" | cut -d " " -f3` $path
-
 	createCell `echo "$name" | cut -d " " -f4` $path
 
-	current_server=`echo "$name" | cut -d " " -f1`
-	current_branch=`echo ${current_server/_Server}`
+	createCell `echo "$name" | cut -d " " -f5` $path
+
+	createCell `echo "$name" | cut -d " " -f6` $path
+
+	createCell `echo "$name" | cut -d " " -f7` $path
+
+	current_server=`echo "$name" | cut -d " " -f2`
+	current_branch=`echo ${current_server}`
 
 	createCellFromMultiJobStatus "${current_branch}MultiJob" $path
 

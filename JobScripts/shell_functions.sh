@@ -11,7 +11,7 @@ function replaceTextInFile(){
 findLineNumber(){
 	PATTERN=$1
 	FILE_PATH=$2
-	linenumber=$(grep -nFx ${PATTERN} ${FILE_PATH} | sed 's/^\([0-9]\+\):.*$/\1/')
+	linenumber=$(grep -nF "${PATTERN}" ${FILE_PATH} | sed 's/^\([0-9]\+\):.*$/\1/')
 	echo $linenumber
 }
 

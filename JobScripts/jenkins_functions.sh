@@ -92,7 +92,7 @@ getXmlElement(){
 
 get_job_status() {
 	JOB=$1
-	curl -X post http://104.236.113.75:8080/job/${JOB}/lastBuild/api/xml -u ${USERNAME}:${PASSWORD} > /tmp/${JOB}_tmp.xml
+	curl -X post ${JENKINS_URL}/job/${JOB}/lastBuild/api/xml -u ${USERNAME}:${PASSWORD} > /tmp/${JOB}_tmp.xml
 	grep -q html /tmp/${JOB}_tmp.xml
 	if [ $? -eq 0 ]
 	then
@@ -112,7 +112,7 @@ get_job_status() {
 
 get_job_status_multijob() {
         JOB=$1
-        curl -X post http://104.236.113.75:8080/job/${JOB}/lastBuild/api/xml -u ${USERNAME}:${PASSWORD} > /tmp/${JOB}_tmp.xml
+        curl -X post ${JENKINS_URL}/job/${JOB}/lastBuild/api/xml -u ${USERNAME}:${PASSWORD} > /tmp/${JOB}_tmp.xml
 	grep -q html /tmp/${JOB}_tmp.xml
         if [ $? -eq 0 ]
         then
