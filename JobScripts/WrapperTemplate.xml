@@ -72,9 +72,8 @@ updateColumn ${JENKINS_HOME}/portlookup/server_mapping ${lineNumber} 4 ${server_
 echo &quot;Installing Docker..&quot;
 install_docker ${server_ip}
 
-
-echo &quot;Copying Docker Image..&quot;
-copy_docker_image ${JENKINS_HOME} {feature_branch} ${server_ip}
+echo &quot;pull Docker Image..&quot;
+pullImagefroms3 {feature_branch} ${server_ip}
 
 sleep 1m
 

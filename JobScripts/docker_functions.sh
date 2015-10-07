@@ -48,7 +48,7 @@ create_image_from_container() {
 	CONTAINER_NAME="${1}_Container"
 	IMAGE_NAME="${BRANCH_NAME}_IMAGE"
 
-	docker commit ${CONTAINER_NAME} ${IMAGE_NAME,,}
+       time docker commit ${CONTAINER_NAME} ${IMAGE_NAME,,}
 }
 
 create_image_dump() {
@@ -56,7 +56,7 @@ create_image_dump() {
 	DUMP_LOCATION=$2
 	IMAGE_NAME="${BRANCH_NAME}_IMAGE"
 
-	docker save ${IMAGE_NAME,,} > ${DUMP_LOCATION}/${IMAGE_NAME,,}.tar 
+	time docker save ${IMAGE_NAME,,} > ${DUMP_LOCATION}/${IMAGE_NAME,,}.tar 
 }	
 
 delete_image() {

@@ -112,7 +112,7 @@ mergeBranchToActiveBranches() {
 	echo "EMAIL=" >> "/var/lib/jenkins/jobs/merge_master_to_feature/email.properties"
 	for TARGET_BRANCH in ${TARGET_BRANCHES}; do
 		TARGET_BRANCH=`echo ${TARGET_BRANCH/_Server}`
-		build_merge merge_source_target ${SOURCE_BRANCH} ${TARGET_BRANCH} /var/lib/jenkins/workspace/merge_source_target 
+		build_merge merge_source_target ${SOURCE_BRANCH} ${TARGET_BRANCH} /var/lib/jenkins/jobs/merge_source_target/workspace 
 	done
 }
 
@@ -212,4 +212,32 @@ get_instance_id(){
 	JENKINS_HOME=$2
 
         cat ${JENKINS_HOME}/portlookup/server_mapping | grep ${branch_name} | cut -d ' ' -f3
+}
+
+copyImageToS3(){
+	branch_name=$1
+	image_path=$2
+	time aws s3 cp ${image_path}/${branch_name,,}_image.tar s3://redcrackle/${branch_name,,}_image.tar
+}
+
+pullImagefroms3(){
+        BRANCH_NAME=$1
+        server_ip=$2
+        IMAGE_NAME="${BRANCH_NAME}_IMAGE"
+        ssh -o StrictHostKeyChecking=no root@${server_ip} "docker images | grep -q ${IMAGE_NAME,,}"
+        if [ $? -eq 0 ];
+        then
+                echo "Image Already Exist .."
+        else
+		ssh root@${server_ip} -o StrictHostKeyChecking=no "time aws s3 cp s3://redcrackle/${IMAGE_NAME,,}.tar ."
+                echo "Loading Docker Images .."
+                ssh -o StrictHostKeyChecking=no root@${server_ip} "time docker load < ~/${IMAGE_NAME,,}.tar"
+                sleep 1m
+        fi
+}
+get_server_ip(){
+	branch_name=$1
+        JENKINS_HOME=$2
+
+        cat ${JENKINS_HOME}/portlookup/server_mapping | grep ${branch_name} | cut -d ' ' -f4
 }
