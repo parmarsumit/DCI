@@ -59,7 +59,7 @@ source /var/lib/jenkins/JobScripts/create_container_html.sh
 source /var/lib/jenkins/JobScripts/jenkins.properties
 source /var/lib/jenkins/JobScripts/git_functions_new.sh
 
-SERVER_NAME=${BRANCH_NAME}
+SERVER_NAME=${BRANCH_NAME}_Server
 
 echo &quot;creating job config from template..&quot;
 createJobConfigFromTemplate ~/JobScripts/WrapperTemplate.xml ${BRANCH_NAME} /tmp/config1.xml 
@@ -77,7 +77,7 @@ sleep 1m
 echo &quot;Copying the database to the container..&quot;
 setup_mysql &quot;localhost&quot; &quot;4940&quot; &quot;${JENKINS_HOME}&quot;
 
-echo &quot;Copying the files to the container..&quot;
+echo &quot;copying the files to the container..&quot;
 copy_files &quot;localhost&quot; &quot;4940&quot; &quot;${JENKINS_HOME}&quot;
 
 echo &quot;create image from container..&quot;
@@ -85,12 +85,20 @@ create_image_from_container ${BRANCH_NAME}
 
 sleep 2m
 
-echo &quot;create image dump..&quot;
+echo &quot;creating image dump..&quot;
 create_image_dump ${BRANCH_NAME} ${JENKINS_HOME}
 
+echo &quot;image dump copy to s3&quot;
+copyImageToS3 ${BRANCH_NAME} ${JENKINS_HOME}
+
+echo &quot;delete container&quot;
 delete_container ${BRANCH_NAME}
 
+echo &quot;delete image&quot;
 delete_image ${BRANCH_NAME}
+
+echo &quot;delete image dump&quot;
+delete_image_dump ${BRANCH_NAME} ${JENKINS_HOME}
 
 createJob &quot;${BRANCH_NAME}MultiJob&quot; /tmp/config1.xml
 createJob &quot;${BRANCH_NAME}UnitTest&quot; /tmp/config2.xml
@@ -102,10 +110,9 @@ echo &quot;SSH =&gt; 4940&quot;
 echo &quot;VNC =&gt; 5901&quot;
 echo &quot;NGINX =&gt; 8292&quot;
 
-#BRANCH_AUTHOR_EMAIL=`$(get_branch_author_email ${BRANCH_NAME})`
-#echo $BRANCH_AUTHOR_EMAIL
-#echo &quot;I&apos;ve to send mail to $BRANCH_AUTHOR_EMAIL about the branch getting tracked by CI system&quot;
-#echo &quot;EMAIL=$BRANCH_AUTHOR_EMAIL&quot; &gt; email.txt</command>
+BRANCH_AUTHOR_EMAIL=$(get_branch_author_email ${BRANCH_NAME})
+echo &quot;I&apos;ve to send mail to $BRANCH_AUTHOR_EMAIL about the branch getting tracked by CI system&quot;
+echo &quot;EMAIL=$BRANCH_AUTHOR_EMAIL&quot; &gt; email.txt</command>
     </hudson.tasks.Shell>
     <EnvInjectBuilder plugin="envinject@1.92.1">
       <info>
@@ -119,9 +126,26 @@ echo &quot;NGINX =&gt; 8292&quot;
       <configuredTriggers>
         <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
           <email>
-            <recipientList></recipientList>
+            <recipientList>$DEFAULT_RECIPIENTS</recipientList>
             <subject>$PROJECT_DEFAULT_SUBJECT</subject>
             <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.ListRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+        <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+          <email>
+            <recipientList>$DEFAULT_RECIPIENTS,$EMAIL</recipientList>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>Now our CI system is managing your branch, check our CI dashboard for details about your branches
+http://128.199.59.108
+$PROJECT_DEFAULT_CONTENT</body>
             <recipientProviders>
               <hudson.plugins.emailext.plugins.recipients.DevelopersRecipientProvider/>
             </recipientProviders>
@@ -131,7 +155,7 @@ echo &quot;NGINX =&gt; 8292&quot;
             <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
             <contentType>project</contentType>
           </email>
-        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+        </hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
       </configuredTriggers>
       <contentType>default</contentType>
       <defaultSubject>$DEFAULT_SUBJECT</defaultSubject>

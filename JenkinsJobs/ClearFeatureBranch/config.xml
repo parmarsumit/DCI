@@ -44,10 +44,12 @@ deleteJob &quot;${BRANCH_NAME}UnitTest&quot;
 deleteJob &quot;${BRANCH_NAME}FunctionalTest&quot;
 deleteJob &quot;${BRANCH_NAME}StaticCodeAnalysis&quot;
 
-delete_image_dump ${BRANCH_NAME} ${JENKINS_HOME}
+#delete_image_dump ${BRANCH_NAME} ${JENKINS_HOME}
 
 linenum=`findLineNumber &quot;${BRANCH_NAME}&quot; /var/lib/jenkins/portlookup/server_mapping`
 deleteLine $linenum /var/lib/jenkins/portlookup/server_mapping
+
+deleteImagefroms3 ${BRANCH_NAME}
 
 
 
