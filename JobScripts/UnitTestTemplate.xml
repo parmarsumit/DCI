@@ -10,17 +10,23 @@
       <scanQueueFor>DISABLED</scanQueueFor>
       <blockingJobs></blockingJobs>
     </hudson.plugins.buildblocker.BuildBlockerProperty>
-    <hudson.model.ParametersDefinitionProperty>
-      <parameterDefinitions>
-        <hudson.model.StringParameterDefinition>
-          <name>server_ip</name>
-          <description></description>
-          <defaultValue></defaultValue>
-        </hudson.model.StringParameterDefinition>
-      </parameterDefinitions>
-    </hudson.model.ParametersDefinitionProperty>
   </properties>
-  <scm class="hudson.scm.NullSCM"/>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@2.4.0">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>git@github.com:mulesoft-web/ProgrammableWeb</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/{feature_branch}</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
   <canRoam>true</canRoam>
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>true</blockBuildWhenDownstreamBuilding>
@@ -31,15 +37,40 @@
     <hudson.tasks.Shell>
       <command>#!/bin/bash
 source /var/lib/jenkins/JobScripts/create_container_html.sh
-
-
-ssh root@${server_ip} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb/results &amp;&amp; rm -f *.xml&quot;
-
-ssh root@${server_ip} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb &amp;&amp; tests/bin/phpunit -v --debug --stop-on-failure --log-junit results/phpunit.xml tests/phpunit_tests&quot;
+source /var/lib/jenkins/JobScripts/jenkins.properties
+source /var/lib/jenkins/JobScripts/manage_instance.sh
+source /var/lib/jenkins/JobScripts/util_functions.sh
+source /var/lib/jenkins/JobScripts/git_functions.sh
+source /var/lib/jenkins/JobScripts/docker_functions.sh
+source /var/lib/jenkins/JobScripts/file_functions.sh
+source /var/lib/jenkins/JobScripts/service_functions.sh
+source /var/lib/jenkins/JobScripts/testsuites.sh
 
 rm -rf results
+
 mkdir -p results
-scp -P 4940 root@${server_ip}:/usr/share/nginx/www/ProgrammableWeb/results/*.xml results/</command>
+
+BRANCH_NAME={feature_branch}
+
+range=`seq 1 ${NO_OF_INSTANCES}`
+
+for x in $range; do
+
+launchMultipleInstance $x ${BRANCH_NAME} ${IMAGE} ${SIZE} ${ENDPOINT} ${TOKEN} ${REGION} ${SSH_ID} ${JENKINS_HOME} ${NO_OF_INSTANCES} &amp;
+
+done
+
+wait
+
+deleteMultipleInstance ${JENKINS_HOME} ${BRANCH_NAME} ${ENDPOINT} ${TOKEN}
+
+#ssh root@${server_ip} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb/results &amp;&amp; rm -f *.xml&quot;
+
+#ssh root@${server_ip} -p 4940 &quot;cd /usr/share/nginx/www/ProgrammableWeb &amp;&amp; tests/bin/phpunit -v --debug --stop-on-failure --log-junit results/phpunit.xml tests/phpunit_tests&quot;
+
+#rm -rf results
+#mkdir -p results
+#scp -P 4940 root@${server_ip}:/usr/share/nginx/www/ProgrammableWeb/results/*.xml results/</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>
