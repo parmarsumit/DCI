@@ -32,7 +32,7 @@ SSH_ID=$8
 JENKINS_HOME=$9
 NO_OF_INSTANCES=${10}
 
-  echo "Lunching ${c} instance.."
+  echo "Lunching ${no_of_ins} instance.."
   GENERATED_SERVER_NAME="${branch_name}$RANDOM"
   instance_id=`python ${JENKINS_HOME}/JobScripts/manage_instance.py 'launch_instance("'"${GENERATED_SERVER_NAME}"'","'"${IMAGE}"'","'"${SIZE}"'","'"${ENDPOINT}"'","'"${TOKEN}"'","'"$REGION"'","'"$SSH_ID"'")'`
   echo "Waiting for instance to be built.."
@@ -89,7 +89,30 @@ numberOfTestFile=`getNumberOfTestPerMachine ${numberOfTest} ${NO_OF_INSTANCES}`
 
 createTestSuiteFile ${NO_OF_INSTANCES} ${numberOfTestFile} ${server_ip}
 
-ssh root@${server_ip} -p 4940 "cd /usr/share/nginx/www/ProgrammableWeb && tests/bin/phpunit -v --debug --stop-on-failure --configuration config.xml --testsuite SET${no_of_ins} --log-junit results/phpunit.xml"
+ssh root@${server_ip} -p 4940 "cd /usr/share/nginx/www/ProgrammableWeb && tests/bin/phpunit -v --debug --stop-on-failure --configuration config.xml --testsuite SET${no_of_ins} --log-junit results/phpunit${no_of_ins}.xml"
 
-echo "${GENERATED_SERVER_NAME} ${instance_id} ${server_ip}"  >> ${JENKINS_HOME}/portlookup/new_server_info
+scp -P 4940 root@${server_ip}:/usr/share/nginx/www/ProgrammableWeb/results/*.xml results/
+echo "${GENERATED_SERVER_NAME} ${instance_id} ${server_ip}"  >> ${JENKINS_HOME}/portlookup/${branch_name}new_server_info
 }
+
+deleteMultipleInstance(){
+JENKINS_HOME=$1
+branch_name=$2
+ENDPOINT=$3
+TOKEN=$4
+	rm -rf /tmp/${branch_name}instance_id 
+	cat ${JENKINS_HOME}/portlookup/${branch_name}new_server_info |cut -d ' ' -f2 > /tmp/${branch_name}instance_id	
+	while read line
+	do
+	instance_id=${line}
+	echo "Delete instance"
+		python ~/JobScripts/manage_instance.py 'del_instance("'"$ENDPOINT"'","'"$TOKEN"'","'"$instance_id"'")'
+	done < /tmp/${branch_name}instance_id 
+	rm -rf ${JENKINS_HOME}/portlookup/${branch_name}new_server_info
+
+}
+
+
+
+
+

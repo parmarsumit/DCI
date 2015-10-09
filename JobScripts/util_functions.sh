@@ -241,3 +241,9 @@ get_server_ip(){
 
         cat ${JENKINS_HOME}/portlookup/server_mapping | grep ${branch_name} | cut -d ' ' -f4
 }
+
+deleteImagefroms3(){
+	branch_name=$1
+	time aws s3 rm s3://redcrackle/${branch_name,,}_image.tar
+
+}

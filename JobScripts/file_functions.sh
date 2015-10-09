@@ -14,3 +14,11 @@ function updateColumn(){
 
 	awk 'NR==lineNumber{$columnNumber=newValue}1' columnNumber=$columnNumber lineNumber=$lineNumber newValue=$newValue $fileName > tmp && mv tmp $fileName
 }
+
+function updateInstanceNumber()
+{
+        instanceNumber=$1
+        JENKINS_HOME=$2
+        sed -i -re 's/(NO_OF_INSTANCES=)[^=]*$/\1'$instanceNumber'/' ${JENKINS_HOME}/JobScripts/jenkins.properties
+}
+
